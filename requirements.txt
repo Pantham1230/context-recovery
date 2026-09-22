@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+PyGithub
+python-dotenv
+pydantic
+sentence-transformers
+scikit-learn
+numpy
+google-genai
+requests
