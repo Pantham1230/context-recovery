@@ -1,18 +1,11 @@
-from sentence_transformers import SentenceTransformer
 import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
-MODEL_NAME = "all-MiniLM-L6-v2"
-
-model = SentenceTransformer(MODEL_NAME)
+vectorizer = TfidfVectorizer(stop_words="english", ngram_range=(1, 2))
 
 
 def create_embeddings(documents: list[dict]) -> np.ndarray:
     texts = [document["text"] for document in documents]
 
-    embeddings = model.encode(
-        texts,
-        normalize_embeddings=True
-    )
-
-    return np.array(embeddings)
+    return np.asarray(vectorizer.fit_transform(texts).toarray())

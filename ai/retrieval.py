@@ -1,10 +1,5 @@
 import numpy as np
-from sentence_transformers import SentenceTransformer
-
-
-MODEL_NAME = "all-MiniLM-L6-v2"
-
-model = SentenceTransformer(MODEL_NAME)
+from ai.embeddings import vectorizer
 
 
 def retrieve_documents(
@@ -17,10 +12,7 @@ def retrieve_documents(
     if not documents:
         return []
 
-    task_embedding = model.encode(
-        [task],
-        normalize_embeddings=True
-    )[0]
+    task_embedding = vectorizer.transform([task]).toarray()[0]
 
     scores = embeddings @ task_embedding
 

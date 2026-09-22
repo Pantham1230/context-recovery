@@ -49,6 +49,24 @@ Open these URLs in a browser:
 - `http://127.0.0.1:8000/docs` for interactive API documentation
 - `http://127.0.0.1:8000/health` for a health check
 
+## Deploy To Vercel
+
+This repository is configured to deploy the frontend and FastAPI backend as one Vercel project.
+
+1. Import the GitHub repository into Vercel. A collaborator can do this if the repository is visible through the Vercel GitHub integration.
+2. Keep the project root as the repository root. Do not set `frontend` as the root directory.
+3. Add these environment variables in the Vercel project settings:
+
+	```text
+	GITHUB_TOKEN=your_github_token
+	GEMINI_API_KEY=your_gemini_api_key
+	```
+
+4. Deploy. Vercel uses `api/index.py` as the Python entrypoint and `vercel.json` routes requests to the FastAPI application.
+5. Open the generated deployment URL and check `/health` before trying a live repository recovery.
+
+The Vercel deployment uses scikit-learn TF-IDF retrieval so it does not need to download a transformer model during serverless startup.
+
 ## API
 
 Replace `OWNER` and `REPO` with a repository you can access:
