@@ -5,9 +5,16 @@ from google import genai
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
 MODEL_NAME = "gemini-2.5-flash"
+
+
+def _get_client() -> genai.Client:
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError(
+            "GEMINI_API_KEY is not configured. Add it to .env before using context recovery."
+        )
+    return genai.Client(api_key=api_key)
 
 
 def generate_reasoning(task: str, retrieved_documents: list[dict]) -> dict:
@@ -60,7 +67,7 @@ Rules:
 - Confidence must be "high", "medium", or "low".
 """
 
-    response = client.models.generate_content(
+    response = _get_client().models.generate_content(
         model=MODEL_NAME,
         contents=prompt,
     )
