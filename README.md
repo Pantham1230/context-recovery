@@ -1,55 +1,89 @@
-# Context Recovery GitHub Data Layer
+# Context Recovery
 
-This prototype collects GitHub repository history and source files, then converts the results into a common Pydantic document format for a later retrieval or AI layer. It contains no LLM calls, embeddings, vector database, or non-GitHub integrations.
+Context Recovery reconstructs the history behind a GitHub codebase. It collects repository metadata, issues, pull requests, reviews, comments, commits, and source files, then uses retrieval and AI reasoning to produce an evidence-backed context card for a developer task.
+
+## Features
+
+- FastAPI backend with normalized GitHub documents.
+- Semantic document preparation, embeddings, and retrieval.
+- Gemini-powered reasoning over retrieved GitHub evidence.
+- Browser workspace served by the API at `/`.
+- Demo fallback in the frontend when the API or a live repository is unavailable.
+
+## Requirements
+
+- Python 3.10 or newer
+- A GitHub personal access token with access to the repositories you want to inspect
+- A Gemini API key for the `/recover` endpoint
 
 ## Setup
 
-Windows PowerShell:
+From the project root, create and activate a virtual environment:
 
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env` and add your own token:
+Create a `.env` file with your credentials:
 
 ```text
-GITHUB_TOKEN=your_token_here
+GITHUB_TOKEN=your_github_token
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
-The token is loaded with `python-dotenv`, is never hardcoded, and is excluded from Git by `.gitignore`.
+Credentials are loaded with `python-dotenv` and should not be committed. The repository's `.gitignore` excludes `.env` files.
 
 ## Run
 
-From the project root:
+Start the development server from the project root:
 
-```powershell
-venv\Scripts\python.exe -m uvicorn backend.main:app --reload
+```bash
+python -m uvicorn backend.main:app --reload
 ```
 
-Open `http://127.0.0.1:8000/docs` for the interactive API documentation.
+Open these URLs in a browser:
 
-## Endpoints
+- `http://127.0.0.1:8000/` for the Context Recovery workspace
+- `http://127.0.0.1:8000/docs` for interactive API documentation
+- `http://127.0.0.1:8000/health` for a health check
+
+## API
 
 Replace `OWNER` and `REPO` with a repository you can access:
 
 ```text
-GET /repository/OWNER/REPO
-GET /repository/OWNER/REPO/issues
-GET /repository/OWNER/REPO/issues/42/comments
-GET /repository/OWNER/REPO/pulls
-GET /repository/OWNER/REPO/pulls/42/comments
-GET /repository/OWNER/REPO/pulls/42/reviews
-GET /repository/OWNER/REPO/pulls/42/commits
-GET /repository/OWNER/REPO/pulls/42/files
-GET /repository/OWNER/REPO/commits
-GET /repository/OWNER/REPO/files
-GET /repository/OWNER/REPO/context
+GET  /repository/OWNER/REPO
+GET  /repository/OWNER/REPO/issues
+GET  /repository/OWNER/REPO/issues/42/comments
+GET  /repository/OWNER/REPO/pulls
+GET  /repository/OWNER/REPO/pulls/42/comments
+GET  /repository/OWNER/REPO/pulls/42/reviews
+GET  /repository/OWNER/REPO/pulls/42/commits
+GET  /repository/OWNER/REPO/pulls/42/files
+GET  /repository/OWNER/REPO/commits
+GET  /repository/OWNER/REPO/files
+GET  /repository/OWNER/REPO/context
+POST /repository/OWNER/REPO/recover
 ```
 
-The `/context` response contains `repository`, `issues`, `pull_requests`, `commits`, `files`, and `comments_reviews`. Every item uses the normalized shape `source`, `repository`, `type`, `id`, `title`, `content`, `author`, `timestamp`, `metadata`, and `url`. Type-specific fields such as labels, branches, changed files, review state, file path, and commit SHA remain in `metadata`.
+The recovery endpoint accepts a task and optional result count:
 
-## Live verification checklist
+```bash
+curl -X POST http://127.0.0.1:8000/repository/OWNER/REPO/recover \
+	-H 'Content-Type: application/json' \
+	-d '{"task":"Investigate the authentication timeout", "top_k":5}'
+```
 
-After adding the token, call each endpoint with PowerShell, curl, or the Swagger UI at `/docs`. Check repository metadata, issue comments, pull request conversation comments and reviews, commit patches, source files, and the complete context response. Responses are JSON-serializable through FastAPI's Pydantic response models.
+The `/context` endpoint returns normalized GitHub records grouped into `repository`, `issues`, `pull_requests`, `commits`, `files`, and `comments_reviews`. The `/recover` endpoint runs the full pipeline: collect context, prepare documents, create embeddings, retrieve relevant evidence, generate reasoning, and build a context card.
+
+## Tests
+
+Run the test suite from the project root:
+
+```bash
+pytest
+```
+
+The unit tests cover preprocessing, embeddings, retrieval, reasoning, and context-card construction using local sample data.
